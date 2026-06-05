@@ -9,9 +9,11 @@ COPY . .
 
 RUN mkdir -p instance templates static
 
-EXPOSE 5000
+# Hugging Face Spaces requires port 7860; locally we override via -e PORT=5000.
+EXPOSE 7860
 
-ENV FLASK_HOST=0.0.0.0 \
-    FLASK_PORT=5000
+ENV PORT=7860 \
+    FLASK_HOST=0.0.0.0
 
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "app:app"]
+# Use $PORT so the same image runs on HF Spaces (7860) and locally (-e PORT=5000).
+CMD gunicorn --bind 0.0.0.0:${PORT} --workers 2 app:app

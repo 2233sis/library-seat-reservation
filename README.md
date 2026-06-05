@@ -1,3 +1,14 @@
+---
+title: Library Seat Reservation
+emoji: 📚
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+app_port: 7860
+pinned: false
+license: mit
+---
+
 # Library Seat Reservation System
 
 > **Layer 2** of an AI-powered meta-software development pipeline (DTS114TC CW).
@@ -136,9 +147,9 @@ Two-target split, mirroring the Week 6 Practical:
 | Target | What is deployed | Reason |
 |--------|------------------|--------|
 | **GitHub Pages** | static landing snapshot of the SPA | matches Practical 3 (Pages) workflow |
-| **Render** (free tier) | Flask backend (this entire directory, via `Dockerfile`) | Pages cannot host Python backends |
+| **Hugging Face Spaces** (Docker SDK, free tier) | Flask backend (this entire directory, via `Dockerfile`) | Pages cannot host Python backends; HF chosen over Render because it does not require payment-card verification |
 
-Render auto-deploys on push to `main`. Production overrides:
+Hugging Face Spaces auto-deploys on push to its remote (`huggingface` branch `main`). Production overrides:
 
 | Env var | Purpose |
 |---------|---------|
