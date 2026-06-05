@@ -626,55 +626,46 @@ def flag_empty_seat(user, booking_id):
 
 # Initialize database with sample data
 def init_db():
-    # Check if admin exists
-    admin = db_session.query(User).filter_by(username='admin').first()
-    if not admin:
-        admin = User(
-            username='admin',
-            password_hash=generate_password_hash('admin123'),
-            role='admin'
-        )
-        db_session.add(admin)
-    
-    student = db_session.query(User).filter_by(username='student1').first()
-    if not student:
-        student = User(
-            username='student1',
-            password_hash=generate_password_hash('student123'),
-            role='user'
-        )
-        db_session.add(student)
-    
-    # Create seats if they don't exist
+    """Idempotent seed.
+
+    Each insert is committed individually with IntegrityError swallowed,
+    so concurrent gunicorn workers calling init_db() in parallel cannot
+    deadlock on UNIQUE constraint violations.
+    """
+    from sqlalchemy.exc import IntegrityError
+
+    def _add_if_missing(query_filter, build):
+        if db_session.query(query_filter[0]).filter_by(**query_filter[1]).first():
+            return
+        db_session.add(build())
+        try:
+            db_session.commit()
+        except IntegrityError:
+            db_session.rollback()  # another worker beat us to it - that is fine
+
+    _add_if_missing(
+        (User, {'username': 'admin'}),
+        lambda: User(username='admin', password_hash=generate_password_hash('admin123'), role='admin'),
+    )
+    _add_if_missing(
+        (User, {'username': 'student1'}),
+        lambda: User(username='student1', password_hash=generate_password_hash('student123'), role='user'),
+    )
+
     seat_numbers = ['A101', 'A102', 'A103', 'A104', 'A105', 'A106', 'A107', 'A108', 'A109', 'A110',
                     'B201', 'B202', 'B203', 'B204', 'B205']
     meeting_rooms = ['M301', 'M302', 'M303', 'M304', 'M305']
-    
+
     for sn in seat_numbers:
-        existing = db_session.query(Seat).filter_by(seat_number=sn).first()
-        if not existing:
-            seat = Seat(
-                seat_number=sn,
-                type='single',
-                capacity=1,
-                has_power=True,
-                location=f'Floor {sn[0]}'
-            )
-            db_session.add(seat)
-    
+        _add_if_missing(
+            (Seat, {'seat_number': sn}),
+            lambda sn=sn: Seat(seat_number=sn, type='single', capacity=1, has_power=True, location=f'Floor {sn[0]}'),
+        )
     for mr in meeting_rooms:
-        existing = db_session.query(Seat).filter_by(seat_number=mr).first()
-        if not existing:
-            seat = Seat(
-                seat_number=mr,
-                type='meeting',
-                capacity=6,
-                has_power=True,
-                location=f'Floor {mr[0]}'
-            )
-            db_session.add(seat)
-    
-    db_session.commit()
+        _add_if_missing(
+            (Seat, {'seat_number': mr}),
+            lambda mr=mr: Seat(seat_number=mr, type='meeting', capacity=6, has_power=True, location=f'Floor {mr[0]}'),
+        )
 
 # Initialize database
 with app.app_context():

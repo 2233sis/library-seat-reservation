@@ -16,4 +16,4 @@ ENV PORT=7860 \
     FLASK_HOST=0.0.0.0
 
 # Use $PORT so the same image runs on HF Spaces (7860) and locally (-e PORT=5000).
-CMD gunicorn --bind 0.0.0.0:${PORT} --workers 2 app:app
+CMD gunicorn --bind 0.0.0.0:${PORT} --workers 1 --threads 4 app:app
