@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Library Seat Reservation</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    }
+    body {
+      background: #f4f7fc;
+      color: #1e293b;
+      padding-top: 70px;
+    }
+    /* sticky nav */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: white;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      display: flex;
+      align-items: center;
+      padding: 0 2rem;
+      height: 64px;
+      z-index: 100;
+      gap: 2rem;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .navbar .brand {
+      font-weight: 700;
+      font-size: 1.3rem;
+      color: #1e4a7a;
+      letter-spacing: -0.3px;
+    }
+    .nav-links {
+      display: flex;
+      gap: 1.5rem;
+      margin-left: auto;
+    }
+    .nav-links a {
+      text-decoration: none;
+      color: #334155;
+      font-weight: 500;
+      padding: 0.25rem 0.5rem;
+      border-radius: 6px;
+      transition: 0.2s;
+      cursor: pointer;
+    }
+    .nav-links a:hover, .nav-links a.active {
+      background: #e6f0ff;
+      color: #1e4a7a;
+    }
+    .nav-links a.admin-link {
+      color: #b45309;
+    }
+    .nav-links a.admin-link:hover {
+      background: #fef3c7;
+    }
+    .user-badge {
+      font-size: 0.9rem;
+      color: #1e293b;
+      background: #f1f5f9;
+      padding: 0.2rem 0.9rem;
+      border-radius: 30px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .user-badge button {
+      background: none;
+      border: none;
+      color: #b91c1c;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    /* main container */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1.5rem 2rem;
+    }
+    .page {
+      display: none;
+    }
+    .page.active-page {
+      display: block;
+    }
+    /* cards */
+    .card {
+      background: white;
+      border-radius: 20px;
+      padding: 1.8rem;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+      margin-bottom: 2rem;
+    }
+    .rules-panel {
+      border-left: 6px solid #2563eb;
+      background: white;
+      border-radius: 16px;
+      padding: 1.5rem 2rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+      margin: 2rem 0;
+    }
+    .rules-panel h3 {
+      color: #1e3a5f;
+      margin-bottom: 1rem;
+    }
+    .rules-panel ol {
+      padding-left: 1.5rem;
+      line-height: 2;
+      color: #1e293b;
+    }
+    .rules-panel li {
+      margin-bottom: 0.3rem;
+    }
+    /* forms */
+    .auth-toggle {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .auth-toggle button {
+      background: #eef2f6;
+      border: none;
+      padding: 0.5rem 1.5rem;
+      border-radius: 40px;
+      font-weight: 600;
+      color: #334155;
+      cursor: pointer;
+    }
+    .auth-toggle button.active-form {
+      background: #2563eb;
+      color: white;
+    }
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    .form-group label {
+      display: block;
+      font-weight: 500;
+      margin-bottom: 0.3rem;
+      color: #1e293b;
+    }
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 0.6rem 1rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 40px;
+      font-size: 0.95rem;
+    }
+    .btn {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 0.6rem 1.8rem;
+      border-radius: 40px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+      font-size: 0.95rem;
+    }
+    .btn:hover {
+      background: #1d4ed8;
+    }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid #2563eb;
+      color: #2563eb;
+    }
+    .btn-danger {
+      background: #dc2626;
+    }
+    .btn-danger:hover {
+      background: #b91c1c;
+    }
+    .btn-sm {
+      padding: 0.3rem 1rem;
+      font-size: 0.8rem;
+    }
+    /* seat grid */
+    .section-header {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #0f2b4b;
+      margin: 1.5rem 0 1rem;
+      border-bottom: 2px solid #dbeafe;
+      padding-bottom: 0.3rem;
+    }
+    .seat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 1.2rem;
+      margin-bottom: 2rem;
+    }
+    .seat-card {
+      background: white;
+      border-radius: 20px;
+      padding: 1rem 1rem 1.2rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+      border-left: 8px solid #94a3b8;
+      transition: 0.1s;
+    }
+    .seat-card.free {
+      border-left-color: #16a34a;
+    }
+    .seat-card.occupied {
+      border-left-color: #dc2626;
+    }
+    .seat-card .seat-number {
+      font-weight: 700;
+      font-size: 1.2rem;
+    }
+    .seat-card .type-badge {
+      background: #e2e8f0;
+      padding: 0.2rem 0.8rem;
+      border-radius: 40px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .power-icon {
+      margin-left: 0.5rem;
+      font-size: 1.1rem;
+      cursor: help;
+    }
+    /* status badges */
+    .status-badge {
+      display: inline-block;
+      padding: 0.2rem 0.9rem;
+      border-radius: 40px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: capitalize;
+    }
+    .status-free { background: #dcfce7; color: #166534; }
+    .status-occupied { background: #fee2e2; color: #991b1b; }
+    .status-booked { background: #dbeafe; color: #1e40af; }
+    .status-used { background: #e0e7ff; color: #3730a3; }
+    .status-violated { background: #fce7f3; color: #9d174d; }
+    .status-cancelled { background: #f1f5f9; color: #475569; }
+    /* tables */
+    .table-wrapper {
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+    }
+    th {
+      background: #f8fafc;
+      padding: 0.9rem 1rem;
+      text-align: left;
+      font-weight: 600;
+      color: #1e293b;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    td {
+      padding: 0.8rem 1rem;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .action-buttons {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    /* toast */
+    .toast-container {
+      position: fixed;
+      top: 80px;
+      right: 20px;
+      z-index: 999;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+    .toast {
+      background: white;
+      padding: 0.8rem 1.5rem;
+      border-radius: 40px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+      border-left: 6px solid #2563eb;
+      font-weight: 500;
+      min-width: 240px;
+      animation: slideIn 0.25s ease;
+    }
+    .toast.success { border-left-color: #16a34a; }
+    .toast.error { border-left-color: #dc2626; }
+    .toast.warning { border-left-color: #f59e0b; }
+    .toast.info { border-left-color: #0ea5e9; }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(30px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .hidden { display: none; }
+    .flex { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+    .mt-2 { margin-top: 1rem; }
+    .mb-1 { margin-bottom: 0.5rem; }
+    .text-muted { color: #64748b; }
+  </style>
+</head>
+<body>
+<nav class="navbar">
+  <div class="brand">📚 Library Seats</div>
+  <div class="nav-links">
+    <a id="navHome" class="active" onclick="window.navigate('home')">Home</a>
+    <a id="navSeats" onclick="window.navigate('seats')">Seats</a>
+    <a id="navBook" onclick="window.navigate('book')">Book</a>
+    <a id="navMyBookings" onclick="window.navigate('my-bookings')">My Bookings</a>
+    <a id="navAdmin" class="admin-link hidden" onclick="window.navigate('admin')">Admin</a>
+  </div>
+  <div id="userBadge" class="user-badge hidden"></div>
+</nav>
+<div class="toast-container" id="toastContainer"></div>
+
+<div class="container">
+  <!-- HOME page -->
+  <div id="page-home" class="page active-page">
+    <div class="card" style="padding:0; overflow:hidden; display:flex; align-items:center; justify-content:center; background: #eaf3ff;">
+      <img src="/static/library_seat.png" alt="Library seat" style="max-width:100%; height:auto; max-height:260px; object-fit:cover;" onerror="this.style.display='none'">
+    </div>
+    <div id="authToggle" class="auth-toggle">
+      <button id="showLogin" class="active-form" onclick="window.showLoginForm()">Login</button>
+      <button id="showRegister" onclick="window.showRegisterForm()">Register</button>
+    </div>
+    <div id="loginForm" class="card">
+      <h3>Login</h3>
+      <div class="form-group"><label>Username</label><input id="loginUsername" type="text" placeholder="username"></div>
+      <div class="form-group"><label>Password</label><input id="loginPassword" type="password" placeholder="password"></div>
+      <button class="btn" onclick="window.handleLogin()">Login</button>
+    </div>
+    <div id="registerForm" class="card hidden">
+      <h3>Register</h3>
+      <div class="form-group"><label>Username</label><input id="regUsername" type="text" placeholder="choose username"></div>
+      <div class="form-group"><label>Password</label><input id="regPassword" type="password" placeholder="password"></div>
+      <button class="btn" onclick="window.handleRegister()">Register</button>
+    </div>
+    <div id="rulesPanel" class="rules-panel hidden">
+      <h3>📖 Library Rules</h3>
+      <ol>
+        <li>Bookings limited to 1 hour per session (FR-02)</li>
+        <li>Cancel at least 15 minutes before start time (FR-04)</li>
+        <li>One active booking per user per day (FR-05)</li>
+        <li>Meeting rooms require companion student IDs (FR-06)</li>
+        <li>Late check-in over 15 minutes counts as a violation (FR-07)</li>
+        <li>Empty-seat occupation flagged by admin patrol = violation (FR-11)</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- SEATS page -->
+  <div id="page-seats" class="page">
+    <h2>Seats & Meeting Rooms</h2>
+    <div id="seatsContainer"></div>
+  </div>
+
+  <!-- BOOK page -->
+  <div id="page-book" class="page">
+    <h2>Reserve a Seat</h2>
+    <div class="card">
+      <div class="form-group"><label>Seat</label><select id="bookSeat"></select></div>
+      <div class="form-group"><label>Date</label><input id="bookDate" type="date"></div>
+      <div class="flex">
+        <div class="form-group" style="flex:1;"><label>Start time</label><input id="bookStart" type="time" value="09:00"></div>
+        <div class="form-group" style="flex:1;"><label>End time</label><input id="bookEnd" type="time" value="10:00"></div>
+      </div>
+      <div id="companionGroup" class="form-group hidden"><label>Companion IDs (comma separated)</label><input id="bookCompanions" placeholder="e.g. 2,5"></div>
+      <button class="btn" onclick="window.handleBook()">Book now</button>
+    </div>
+  </div>
+
+  <!-- MY BOOKINGS page -->
+  <div id="page-my-bookings" class="page">
+    <h2>My Bookings</h2>
+    <div class="table-wrapper"><table id="myBookingsTable"><thead><tr><th>Seat</th><th>Date</th><th>Start</th><th>End</th><th>Status</th><th>Actions</th></tr></thead><tbody></tbody></table></div>
+  </div>
+
+  <!-- ADMIN page -->
+  <div id="page-admin" class="page">
+    <h2>Admin Panel</h2>
+    <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+      <button class="btn btn-sm" onclick="window.loadAdminBookings()">🔄 Bookings</button>
+      <button class="btn btn-sm" onclick="window.loadAdminViolations()">🔄 Violations</button>
+      <button class="btn btn-sm" onclick="window.loadBlacklist()">🔄 Blacklist</button>
+    </div>
+    <div id="adminBookingsSection" class="mt-2"><h3>Bookings</h3><div class="table-wrapper"><table id="adminBookingsTable"><thead><tr><th>ID</th><th>User</th><th>Seat</th><th>Date</th><th>Status</th><th>Flag</th></tr></thead><tbody></tbody></table></div></div>
+    <div id="adminViolationsSection" class="mt-2"><h3>Violations</h3><div class="table-wrapper"><table id="adminViolationsTable"><thead><tr><th>User</th><th>Reason</th><th>Date</th></tr></thead><tbody></tbody></table></div></div>
+    <div id="adminBlacklistSection" class="mt-2"><h3>Blacklist</h3><div class="table-wrapper"><table id="blacklistTable"><thead><tr><th>ID</th><th>Username</th><th>Violations</th><th>Remove</th></tr></thead><tbody></tbody></table></div></div>
+    <div class="card mt-2">
+      <h4>Add to blacklist</h4>
+      <div class="flex"><input id="blacklistUserId" placeholder="User ID" style="flex:1; padding:0.5rem 1rem; border-radius:40px; border:1px solid #cbd5e1;"><button id="addBlacklistBtn" class="btn btn-sm" onclick="window.addBlacklist()">Add</button></div>
+    </div>
+    <div class="card">
+      <h4>Add new seat</h4>
+      <div class="flex" style="flex-wrap:wrap;">
+        <input id="addSeatNumber" placeholder="Seat number" style="flex:1; min-width:120px;">
+        <select id="addSeatType" style="flex:1; min-width:100px;"><option value="single">single</option><option value="meeting">meeting</option></select>
+        <input id="addSeatCapacity" type="number" placeholder="Capacity" value="1" style="width:90px;">
+        <label style="display:flex; align-items:center; gap:0.3rem;"><input id="addSeatPower" type="checkbox"> Power</label>
+        <input id="addSeatLocation" placeholder="Location (optional)" style="flex:1; min-width:120px;">
+        <button id="addSeatBtn" class="btn btn-sm" onclick="window.addSeat()">Add Seat</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  // ---------- STATE ----------
+  let token = localStorage.getItem('jwt') || null;
+  let currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+
+  // ---------- API HELPER ----------
+  window.api = async function api(path, options = {}) {
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+    const res = await fetch(path, { ...options, headers });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || data.message || 'Error ' + res.status);
+    return data;
+  };
+
+  // ---------- TOAST ----------
+  function showToast(message, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = 'toast ' + type;
+    toast.textContent = message;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 3500);
+  }
+  window.showToast = showToast;
+
+  // ---------- UI UPDATE ----------
+  function updateUI() {
+    const userBadge = document.getElementById('userBadge');
+    const authToggle = document.getElementById('authToggle');
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    const rulesPanel = document.getElementById('rulesPanel');
+    const adminLink = document.getElementById('navAdmin');
+
+    if (currentUser && token) {
+      authToggle.style.display = 'none';
+      loginForm.style.display = 'none';
+      registerForm.style.display = 'none';
+      rulesPanel.classList.remove('hidden');
+      userBadge.classList.remove('hidden');
+      userBadge.innerHTML = `<span>👤 ${currentUser.username}</span> <button onclick="window.logout()">Logout</button>`;
+      if (currentUser.role === 'admin') {
+        adminLink.classList.remove('hidden');
+      } else {
+        adminLink.classList.add('hidden');
+      }
+    } else {
+      authToggle.style.display = 'flex';
+      loginForm.style.display = 'block';
+      registerForm.style.display = 'none';
+      rulesPanel.classList.add('hidden');
+      userBadge.classList.add('hidden');
+      adminLink.classList.add('hidden');
+    }
+  }
+  window.updateUI = updateUI;
+
+  // ---------- AUTH ----------
+  window.showLoginForm = function() {
+    document.getElementById('loginForm').style.display = 'block';
+    document.getElementById('registerForm').style.display = 'none';
+    document.getElementById('showLogin').classList.add('active-form');
+    document.getElementById('showRegister').classList.remove('active-form');
+  };
+  window.showRegisterForm = function() {
+    document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('registerForm').style.display = 'block';
+    document.getElementById('showRegister').classList.add('active-form');
+    document.getElementById('showLogin').classList.remove('active-form');
+  };
+
+  function setUser(user, jwt) {
+    currentUser = user;
+    token = jwt;
+    localStorage.setItem('currentUser', JSON.stringify(user));
+    localStorage.setItem('jwt', jwt);
+    updateUI();
+  }
+  window.setUser = setUser;
+
+  window.handleLogin = async function() {
+    const username = document.getElementById('loginUsername').value.trim();
+    const password = document.getElementById('loginPassword').value.trim();
+    if (!username || !password) return showToast('Fill in credentials', 'warning');
+    try {
+      const data = await window.api('/api/login', { method: 'POST', body: JSON.stringify({ username, password }) });
+      setUser(data.user, data.token);
+      showToast('Welcome back, ' + data.user.username, 'success');
+      navigate('home');
+    } catch (e) { showToast(e.message, 'error'); }
+  };
+
+  window.handleRegister = async function() {
+    const username = document.getElementById('regUsername').value.trim();
+    const password = document.getElementById('regPassword').value.trim();
+    if (!username || !password) return showToast('Fill in fields', 'warning');
+    try {
+      const data = await window.api('/api/register', { method: 'POST', body: JSON.stringify({ username, password }) });
+      setUser(data.user, data.token);
+      showToast('Registered as ' + data.user.username, 'success');
+      navigate('home');
+    } catch (e) { showToast(e.message, 'error'); }
+  };
+
+  window.logout = function() {
+    token = null;
+    currentUser = null;
+    localStorage.removeItem('jwt');
+    localStorage.removeItem('currentUser');
+    updateUI();
+    navigate('home');
+    showToast('Logged out', 'info');
+  };
+
+  // ---------- NAVIGATION ----------
+  function navigate(pageId) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
+    const page = document.getElementById('page-' + pageId);
+    if (page) page.classList.add('active-page');
+    document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+    const navMap = { home:'navHome', seats:'navSeats', book:'navBook', 'my-bookings':'navMyBookings', admin:'navAdmin' };
+    const activeNav = document.getElementById(navMap[pageId]);
+    if (activeNav) activeNav.classList.add('active');
+    // load data
+    if (pageId === 'seats') loadSeats();
+    if (pageId === 'book') loadBookDropdown();
+    if (pageId === 'my-bookings') loadMyBookings();
+    if (pageId === 'admin') { loadAdminBookings(); loadAdminViolations(); loadBlacklist(); }
+  }
+  window.navigate = navigate;
+
+  // ---------- SEATS ----------
+  async function loadSeats() {
+    const container = document.getElementById('seatsContainer');
+    try {
+      const data = await window.api('/api/seats');
+      const seats = data.seats || [];
+      const singles = seats.filter(s => s.type === 'single');
+      const meetings = seats.filter(s => s.type === 'meeting');
+      let html = '';
+      if (singles.length) {
+        html += '<div class="section-header">Single Seats</div><div class="seat-grid">';
+        singles.forEach(s => {
+          const statusClass = s.status === 'free' ? 'free' : 'occupied';
+          const powerIcon = s.has_power ? '<span class="power-icon" title="Has power outlet">⚡</span>' : '';
+          html += `<div class="seat-card ${statusClass}"><div class="seat-number">${s.seat_number}</div><span class="type-badge">${s.type}</span>${powerIcon}</div>`;
+        });
+        html += '</div>';
+      }
+      if (meetings.length) {
+        html += '<div class="section-header">Meeting Rooms</div><div class="seat-grid">';
+        meetings.forEach(s => {
+          const statusClass = s.status === 'free' ? 'free' : 'occupied';
+          const powerIcon = s.has_power ? '<span class="power-icon" title="Has power outlet">⚡</span>' : '';
+          html += `<div class="seat-card ${statusClass}"><div class="seat-number">${s.seat_number}</div><span class="type-badge">${s.type}</span>${powerIcon}</div>`;
+        });
+        html += '</div>';
+      }
+      if (!singles.length && !meetings.length) html = '<p class="text-muted">No seats available.</p>';
+      container.innerHTML = html;
+    } catch (e) { showToast(e.message, 'error'); }
+  }
+
+  // ---------- BOOK ----------
+  async function loadBookDropdown() {
+    const select = document.getElementById('bookSeat');
+    const companionGroup = document.getElementById('companionGroup');
+    try {
+      const data = await window.api('/api/seats');
+      const seats = data.seats || [];
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('bookDate').min = today;
+      document.getElementById('bookDate').value = today;
+      // set default start/end
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2,'0');
+      const mm = String(now.getMinutes()).padStart(2,'0');
+      document.getElementById('bookStart').value = hh+':'+mm;
+      const endH = String(now.getHours()+1).padStart(2,'0');
+      document.getElementById('bookEnd').value = endH+':'+mm;
+
+      select.innerHTML = '';
+      const singles = seats.filter(s => s.type === 'single');
+      const meetings = seats.filter(s => s.type === 'meeting');
+      if (singles.length) {
+        const optgroup = document.createElement('optgroup');
+        optgroup.label = 'Single Seats';
+        singles.forEach(s => {
+          const opt = document.createElement('option');
+          opt.value = s.id;
+          opt.textContent = s.seat_number + (s.status === 'free' ? ' (free)' : ' (occupied)');
+          opt.disabled = s.status !== 'free';
+          optgroup.appendChild(opt);
+        });
+        select.appendChild(optgroup);
+      }
+      if (meetings.length) {
+        const optgroup = document.createElement('optgroup');
+        optgroup.label = 'Meeting Rooms';
+        meetings.forEach(s => {
+          const opt = document.createElement('option');
+          opt.value = s.id;
+          opt.textContent = s.seat_number + (s.status === 'free' ? ' (free)' : ' (occupied)');
+          opt.disabled = s.status !== 'free';
+          optgroup.appendChild(opt);
+        });
+        select.appendChild(optgroup);
+      }
+      // toggle companion
+      select.onchange = function() {
+        const selectedId = parseInt(this.value);
+        const seat = seats.find(s => s.id === selectedId);
+        if (seat && seat.type === 'meeting') companionGroup.classList.remove('hidden');
+        else companionGroup.classList.add('hidden');
+      };
+      select.dispatchEvent(new Event('change'));
+    } catch (e) { showToast(e.message, 'error'); }
+  }
+
+  window.handleBook = async function() {
+    const seatId = document.getElementById('bookSeat').value;
+    const date = document.getElementById('bookDate').value;
+    const start = document.getElementById('bookStart').value;
+    const end = document.getElementById('bookEnd').value;
+    const companions = document.getElementById('bookCompanions').value.trim();
+    if (!seatId) return showToast('Select a seat', 'warning');
+    try {
+      const body = { seat_id: parseInt(seatId), date, start_time: start, end_time: end, companion_ids: companions || '' };
+      await window.api('/api/bookings', { method: 'POST', body: JSON.stringify(body) });
+      showToast('Booking successful!', 'success');
+      navigate('my-bookings');
+    } catch (e) { showToast(e.message, 'error'); }
+  };
+
+  // ---------- MY BOOKINGS ----------
+  async function loadMyBookings() {
+    const tbody = document.querySelector('#myBookingsTable tbody');
+    try {
+      const data = await window.api('/api/my-bookings');
+      const bookings = data.bookings || [];
+      tbody.innerHTML = '';
+      bookings.forEach(b => {
+        const statusClass = 'status-' + b.status;
+        const showActions = b.status === 'booked';
+        let actionsHtml = '';
+        if (showActions) {
+          actionsHtml = `<div class="action-buttons"><button class="btn btn-sm" onclick="window.checkinBooking(${b.id})">✅ Check-in</button><button class="btn btn-sm btn-danger" onclick="window.cancelBooking(${b.id})">Cancel</button></div>`;
+        }
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${b.seat_number || '—'}</td><td>${b.date}</td><td>${b.start_time || ''}</td><td>${b.end_time || ''}</td><td><span class="status-badge ${statusClass}">${b.status}</span></td><td>${actionsHtml}</td>`;
+        tbody.appendChild(tr);
+      });
+    } catch (e) { showToast(e.message, 'error'); }
+  }
+
+  window.checkinBooking = async function(id) {
+    try {
+      await window.api('/api/bookings/' + id + '/checkin', { method: 'POST' });
+      showToast('Checked in!', 'success');
+      loadMyBookings();
+    } catch (e) { showToast(e.message, 'error'); }
+  };
+  window.cancelBooking = async function(id) {
+    try {
+      await window.api('/api/bookings/' + id, { method: 'DELETE' });
+      showToast('Booking cancelled', 'info');
+      loadMyBookings();
+    } catch (e) { showToast(e.message, 'error'); }
+  };
+
+  // ---------- ADMIN ----------
+  window.loadAdminBookings = async function() {
+    const tbody = document.querySelector('#adminBookingsTable tbody');
+    try {
+      const data = await window.api('/api/admin/bookings');
+      const bookings = data.bookings || [];
+      tbody.innerHTML = '';
+      bookings.forEach(b => {
+        const flagBtn = b.status === 'used' ? `<button class="btn btn-sm btn-danger" onclick="window.flagEmpty(${b.id})">Flag Empty</button>` : '';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${b.id}</td><td>${b.username}</td><td>${b.seat_number}</td><td>${b.date}</td><td><span class="status-badge status-${b.status}">${b.status}</span></td><td>${flagBtn}</td>`;
+        tbody.appendChild(tr);
+      });
+    } catch (e) { showToast(e.message, 'error'); }
+  };
+  window.flagEmpty = async function(bookingId) {
+    try {
+      await window.api('/api/admin/bookings/' + bookingId + '/flag-empty', { method: 'POST' });
+      showToast('Flagged as empty (violation)', 'warning');
+      window.loadAdminBookings();
+    } catch (e) { showToast(e.message, 'error'); }
+  };
+
+  window.loadAdminViolations = async function() {
+    const tbody = document.querySelector('#adminViolationsTable tbody');
+    try {
+      const data = await window.api('/api/admin/violations');
+      const violations = data.violations || [];
+      tbody.innerHTML = '';
+      violations.forEach(v => {
+        const reason = `No-show (${v.start_time || ''} - ${v.end_time || ''})`;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${v.username}</td><td>${reason}</td><td>${v.date}</td>`;
+        tbody.appendChild(tr);
+      });
+    } catch (e) { showToast(e.message, 'error'); }
+  };
+
+  window.loadBlacklist = async function() {
+    const tbody = document.querySelector('#blacklistTable tbody');
+    try {
+      const data = await window.api('/api/admin/blacklist');
+      const list = data.blacklisted_users || [];
+      tbody.innerHTML = '';
+      list.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${item.id}</td><td>${item.username}</td><td>${item.violation_count}</td><td><button class="btn btn-sm btn-danger" onclick="window.removeBlacklist(${item.id})">Remove</button></td>`;
+        tbody.appendChild(tr);
+      });
+    } catch (e) { showToast(e.message, 'error'); }
+  };
+
+  window.addBlacklist = async function() {
+    const userId = document.getElementById('blacklistUserId').value.trim();
+    if (!userId) return showToast('Enter user ID', 'warning');
+    try {
+      await window.api('/api/admin/blacklist', { method: 'POST', body: JSON.stringify({ user_id: parseInt(userId) }) });
+      showToast('User blacklisted', 'success');
+      document.getElementById('blacklistUserId').value = '';
+      window.loadBlacklist();
+    } catch (e) { showToast(e.message, 'error'); }
+  };
+
+  window.removeBlacklist = async function(userId) {
+    try {
+      await window.api('/api/admin/blacklist/' + userId, { method: 'DELETE' });
+      showToast('Removed from blacklist', 'info');
+      window.loadBlacklist();
+    } catch (e) { showToast(e.message, 'error'); }
+  };
+
+  window.addSeat = async function() {
+    const seat_number = document.getElementById('addSeatNumber').value.trim();
+    const type = document.getElementById('addSeatType').value;
+    const capacity = parseInt(document.getElementById('addSeatCapacity').value) || 1;
+    const has_power = document.getElementById('addSeatPower').checked;
+    const location = document.getElementById('addSeatLocation').value.trim();
+    if (!seat_number) return showToast('Seat number required', 'warning');
+    try {
+      await window.api('/api/admin/seats', { method: 'POST', body: JSON.stringify({ seat_number, type, capacity, has_power, location }) });
+      showToast('Seat added', 'success');
+      document.getElementById('addSeatNumber').value = '';
+      document.getElementById('addSeatPower').checked = false;
+      document.getElementById('addSeatLocation').value = '';
+      loadSeats();
+    } catch (e) { showToast(e.message, 'error'); }
+  };
+
+  // ---------- RESTORE SESSION ----------
+  function restoreSession() {
+    const storedUser = localStorage.getItem('currentUser');
+    const storedJwt = localStorage.getItem('jwt');
+    if (storedUser && storedJwt) {
+      try {
+        currentUser = JSON.parse(storedUser);
+        token = storedJwt;
+        updateUI();
+      } catch (e) {
+        localStorage.removeItem('currentUser');
+        localStorage.removeItem('jwt');
+      }
+    }
+  }
+  window.restoreSession = restoreSession;
+
+  // ---------- INIT ----------
+  restoreSession();
+  navigate('home');
+})();
+</script>
+</body>
+</html>
