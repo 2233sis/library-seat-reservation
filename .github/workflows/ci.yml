@@ -9,6 +9,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
     steps:
       - uses: actions/checkout@v4
 
@@ -35,6 +38,25 @@ jobs:
         with:
           name: coverage-report
           path: coverage.xml
+
+      - name: Notify developer on failure (Week 6 Practical pattern)
+        if: failure()
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: "CI/CD Pipeline Failed on " + context.sha.substring(0, 7),
+              body: `The CI/CD workflow failed.
+
+              **Commit:** ${context.sha}
+              **Branch:** ${context.ref}
+              **Workflow:** ${context.workflow}
+
+              Please check the GitHub Actions logs.`
+            });
 
   build:
     needs: test
