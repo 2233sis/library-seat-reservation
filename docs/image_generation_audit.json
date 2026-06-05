@@ -1,0 +1,14 @@
+{
+  "prompt": "A photorealistic university library reading room, rows of wooden study desks with green banker's lamps, tall arched windows letting in warm afternoon light, students reading quietly, oak bookshelves lining the walls, soft cinematic atmosphere, professional architectural photography, 16:9",
+  "primary_provider": "APIFree Qwen-Image-2512",
+  "fallback_provider": "Matplotlib procedural",
+  "attempts": [
+    {
+      "provider": "APIFree Qwen-Image-2512",
+      "role": "primary",
+      "success": true,
+      "details": "Qwen-Image-2512 (1068177 bytes)"
+    }
+  ],
+  "final_image": "static\\library_seat.png"
+}

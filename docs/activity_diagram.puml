@@ -1,0 +1,71 @@
+@startuml
+skinparam backgroundColor #FEFEFE
+skinparam activity {
+  BackgroundColor #F8F8F8
+  BorderColor #333333
+  FontName Arial
+  FontSize 11
+}
+skinparam diamond {
+  BackgroundColor #E8E8E8
+  BorderColor #333333
+  FontName Arial
+  FontSize 11
+}
+skinparam swimlane {
+  BorderColor #333333
+  BorderThickness 2
+  FontName Arial
+  FontSize 12
+  FontStyle bold
+}
+
+|Student|
+start
+:Show Login;
+:Select Seat & Time;
+
+|System|
+:Login Required?;
+if () then ([No])
+  |Student|
+  :Show Login;
+  |System|
+else ([Yes])
+  :Check Blacklist;
+  if () then ([Blacklisted])
+    :Reject (403);
+    stop
+  else ([Clean])
+    :Validate Duration (<=1h);
+    if () then ([>1h])
+      :Reject (400);
+      stop
+    else ([OK])
+      :Check Active Booking;
+      if () then ([Has one])
+        :Reject (409);
+        stop
+      else ([None])
+        :Check Seat Type;
+        if () then ([Meeting])
+          :Require companion_ids;
+          :Validate companions;
+        else ([Other])
+        endif
+        :Conflict Detection;
+        if () then ([Conflict])
+          :Reject (409);
+          stop
+        else ([No conflict])
+          |Database|
+          :Create Booking;
+          |System|
+          :Return 201;
+          stop
+        endif
+      endif
+    endif
+  endif
+endif
+@enduml

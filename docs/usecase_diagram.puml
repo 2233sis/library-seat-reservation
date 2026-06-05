@@ -1,0 +1,48 @@
+@startuml
+left to right direction
+
+skinparam actorStyle awesome
+skinparam useCase {
+  BackgroundColor LightYellow
+  BorderColor Black
+  ArrowColor Black
+}
+
+actor Student as S
+actor Admin as A
+
+rectangle "Library Seat Reservation System" {
+  usecase "Register" as UC1
+  usecase "Login" as UC2
+  usecase "View Seats" as UC3
+  usecase "View Seat Timetable" as UC4
+  usecase "Book Seat" as UC5
+  usecase "Cancel Booking" as UC6
+  usecase "Check In" as UC7
+  usecase "View All Bookings" as UC8
+  usecase "View Violations" as UC9
+  usecase "Manage Blacklist" as UC10
+  usecase "Add Seat" as UC11
+  usecase "Authenticate" as UC12
+  usecase "Check Availability" as UC13
+  usecase "Check >=15min Rule" as UC14
+}
+
+S --> UC1
+S --> UC2
+S --> UC3
+S --> UC4
+S --> UC5
+S --> UC6
+S --> UC7
+
+A -up-|> S
+A --> UC8
+A --> UC9
+A --> UC10
+A --> UC11
+
+UC5 .> UC12 : <<include>>
+UC5 .> UC13 : <<include>>
+UC6 .> UC14 : <<extend>>
+@enduml

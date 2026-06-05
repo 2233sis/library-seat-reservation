@@ -1,0 +1,72 @@
+@startuml
+actor Student
+participant WebApp
+participant AuthService
+participant BookingController
+participant Database
+
+Student -> WebApp: POST /api/bookings (JWT in header)
+activate WebApp
+
+WebApp -> AuthService: validate token
+activate AuthService
+
+alt invalid token
+    AuthService --> WebApp: return 401 AUTH_001
+    deactivate AuthService
+    WebApp --> Student: 401 Unauthorized
+    deactivate WebApp
+else valid token
+    AuthService --> WebApp: token valid
+    deactivate AuthService
+
+    WebApp -> BookingController: process booking
+    activate BookingController
+
+    BookingController -> Database: check blacklist
+    activate Database
+    Database --> BookingController: result
+    deactivate Database
+
+    alt blacklisted
+        BookingController --> WebApp: return 403 PERM_001
+        deactivate BookingController
+        WebApp --> Student: 403 Forbidden
+        deactivate WebApp
+    else not blacklisted
+        BookingController -> Database: check active bookings (FR-05)
+        activate Database
+        Database --> BookingController: result
+        deactivate Database
+
+        alt has active
+            BookingController --> WebApp: return 409 BUS_001
+            deactivate BookingController
+            WebApp --> Student: 409 Conflict
+            deactivate WebApp
+        else no active
+            BookingController -> Database: check seat time conflict (FR-03)
+            activate Database
+            Database --> BookingController: result
+            deactivate Database
+
+            alt conflict
+                BookingController --> WebApp: return 409 BUS_001
+                deactivate BookingController
+                WebApp --> Student: 409 Conflict
+                deactivate WebApp
+            else no conflict
+                BookingController -> Database: INSERT booking
+                activate Database
+                Database --> BookingController: booking created
+                deactivate Database
+
+                BookingController --> WebApp: 201 Created
+                deactivate BookingController
+                WebApp --> Student: show confirmation
+                deactivate WebApp
+            end
+        end
+    end
+end
+@enduml
